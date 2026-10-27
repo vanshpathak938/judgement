@@ -1,0 +1,15 @@
+{
+  "name": "judgement-card-game",
+  "version": "1.0.0",
+  "description": "Judgement (Estimation / Oh Hell) for friends: one always-open table, simple login, saved names.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/sim.js && node test/smoke.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "private": true
+}

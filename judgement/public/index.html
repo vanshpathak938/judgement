@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Judgement</title>
+<meta name="theme-color" content="#0f1923">
+<style>
+:root{
+  --ink:#0f1923; --panel:#172637; --panel-2:#1d3146; --line:#2b4058;
+  --felt:#17484c; --felt-edge:#0e3236; --brass:#e0aa3e; --brass-dim:#8f6d2a;
+  --ivory:#f6f1e4; --red:#c4372c; --black:#1a2330;
+  --text:#e9eff1; --muted:#93a8b2; --good:#74c795; --bad:#e0806f;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--text);font:16px/1.45 var(--sans);min-height:100vh}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- buttons & fields ---------- */
+.btn{border:1px solid var(--line);background:var(--panel-2);padding:.55rem 1rem;border-radius:8px;font-weight:600}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--brass);border-color:var(--brass);color:#1b1305}
+.btn.primary:hover:not(:disabled){background:#efbb52}
+.btn.quiet{background:transparent;padding:.4rem .7rem;font-weight:500;color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+label{display:block;font-size:.9rem;color:var(--muted);margin:0 0 .25rem}
+input[type=text],input[type=password],select{width:100%;background:#0c141d;border:1px solid var(--line);border-radius:8px;padding:.65rem .75rem}
+select{width:auto;min-width:7rem}
+
+/* ---------- auth ---------- */
+#auth{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:2rem;max-width:980px;margin:0 auto;padding:2rem 1.25rem}
+.fan{height:300px;position:relative;display:flex;justify-content:center;align-items:center}
+.fan .card{--cw:104px;position:absolute;transform-origin:50% 120%}
+.fan .card:nth-child(1){transform:rotate(-16deg) translateX(-62px)}
+.fan .card:nth-child(2){transform:rotate(-2deg)}
+.fan .card:nth-child(3){transform:rotate(13deg) translateX(62px)}
+.auth-box h1{font:700 3rem/1 var(--serif);margin:0 0 .4rem;letter-spacing:.01em}
+.auth-box p.lead{margin:0 0 1.5rem;color:var(--muted);max-width:30ch}
+.auth-box .field{margin-bottom:.9rem}
+.auth-box .row{display:flex;gap:.6rem;margin-top:1.1rem;flex-wrap:wrap}
+.err{color:var(--bad);min-height:1.4em;margin:.6rem 0 0}
+@media (max-width:720px){#auth{grid-template-columns:1fr;gap:0;padding-top:1rem}.fan{height:190px}.fan .card{--cw:72px}.fan .card:nth-child(1){transform:rotate(-16deg) translateX(-42px)}.fan .card:nth-child(3){transform:rotate(13deg) translateX(42px)}}
+
+/* ---------- app shell ---------- */
+header.top{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,25,35,.94);backdrop-filter:blur(6px);z-index:5}
+header.top h1{font:700 1.35rem/1 var(--serif);margin:0;flex:1}
+header.top .who{color:var(--muted);font-size:.9rem;margin-right:.25rem}
+main{max-width:980px;margin:0 auto;padding:1rem 1rem 3rem}
+.banner{background:#4a2a1d;border:1px solid #8a4a2c;border-radius:8px;padding:.5rem .8rem;margin-bottom:.8rem}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1rem 1.1rem}
+h2{font:700 1.25rem/1.2 var(--serif);margin:0 0 .6rem}
+h3{font:700 1.05rem/1.2 var(--serif);margin:0 0 .5rem}
+.muted{color:var(--muted)}
+.small{font-size:.88rem}
+
+/* ---------- lobby ---------- */
+.lobby{display:grid;grid-template-columns:3fr 2fr;gap:1rem;align-items:start}
+@media (max-width:760px){.lobby{grid-template-columns:1fr}}
+.seatlist{list-style:none;margin:0 0 1rem;padding:0;display:grid;gap:.4rem}
+.seatlist li{display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;border-radius:8px;background:#0f1d2b;border:1px dashed var(--line);min-height:2.7rem}
+.seatlist li.taken{border-style:solid;background:var(--panel-2)}
+.seatlist li .nm{font-weight:600}
+.seatlist li .tag{margin-left:auto;font-size:.8rem;color:var(--brass)}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:var(--good);flex:none}
+.dot.off{background:#5a6a74}
+.settings{display:flex;flex-wrap:wrap;gap:.8rem 1.2rem;margin:.2rem 0 1rem}
+.settings div{min-width:9rem}
+.actions{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+.board{list-style:none;margin:0;padding:0}
+.board li{display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--line)}
+.board li:last-child{border:0}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{background:var(--panel-2);border-radius:99px;padding:.15rem .65rem;font-size:.88rem}
+
+/* ---------- game ---------- */
+.status{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem}
+.status .round{font:700 1.15rem/1.1 var(--serif)}
+.trump{display:inline-flex;align-items:center;gap:.45rem;background:var(--panel-2);border:1px solid var(--line);border-radius:99px;padding:.2rem .8rem .2rem .55rem}
+.trump .sym{font-size:1.5rem;line-height:1}
+.trump .sym.red{color:#ee6b5d}
+.status .turn{margin-left:auto;font-weight:600;color:var(--brass)}
+.timer{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:400;margin-left:.4rem}
+.seats{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:.5rem;margin-bottom:.8rem}
+.seat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.5rem .7rem;position:relative}
+.seat.turn{border-color:var(--brass);box-shadow:0 0 0 2px rgba(224,170,62,.35);animation:glow 1.8s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 0 5px rgba(224,170,62,.12)}}
+.seat .top{display:flex;justify-content:space-between;align-items:baseline;gap:.4rem}
+.seat .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat.me .nm::after{content:" (you)";font-weight:400;color:var(--muted)}
+.seat .score{font:700 1.4rem/1 var(--serif)}
+.seat .meta{display:flex;gap:.6rem;font-size:.86rem;color:var(--muted);margin-top:.2rem;flex-wrap:wrap}
+.seat .meta b{color:var(--text)}
+.badge{font-size:.72rem;border-radius:4px;padding:0 .35rem;background:#35506b;color:#d6e4ee;margin-left:.3rem}
+.badge.warn{background:#6b3b2b;color:#ffd7c9}
+.felt{background:radial-gradient(ellipse at 50% 40%,#1f5a5f 0,var(--felt) 55%,var(--felt-edge) 100%);border:6px solid #2a2f35;border-radius:20px;min-height:200px;padding:1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;margin-bottom:.9rem;box-shadow:inset 0 0 40px rgba(0,0,0,.35)}
+.trick{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center}
+.play{display:flex;flex-direction:column;align-items:center;gap:.3rem;font-size:.85rem;max-width:90px}
+.play .card{--cw:clamp(46px,8vw,62px)}
+.play.win .card{outline:3px solid var(--brass);outline-offset:2px}
+.play .who{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px}
+.felt .hint{color:#bcd6d6;text-align:center}
+.felt .last{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#bcd6d6}
+.felt .last .card{--cw:26px;box-shadow:none}
+.felt .last .card b{font-size:10px}.felt .last .card i,.felt .last .card u{display:none}
+
+.card{--cw:clamp(46px,10vw,68px);width:var(--cw);height:calc(var(--cw)*1.4);background:var(--ivory);border:1px solid #cfc7b2;border-radius:7px;position:relative;display:inline-block;color:var(--black);padding:0;font-family:var(--serif);box-shadow:0 2px 5px rgba(0,0,0,.4);flex:none;user-select:none}
+.card.red{color:var(--red)}
+.card b{position:absolute;top:5%;left:10%;font-size:calc(var(--cw)*.36);line-height:1}
+.card i{position:absolute;top:calc(var(--cw)*.42);left:10%;font-style:normal;font-size:calc(var(--cw)*.27);line-height:1}
+.card u{position:absolute;right:9%;bottom:4%;text-decoration:none;font-size:calc(var(--cw)*.62);line-height:1}
+.hand{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;padding:.8rem 0 .2rem}
+.hand .card{transition:transform .12s}
+.hand .card.legal{transform:translateY(-10px);outline:2px solid var(--brass);outline-offset:1px}
+.hand .card.legal:hover{transform:translateY(-16px)}
+.hand .card.dim{opacity:.4;cursor:not-allowed}
+.bidpanel{text-align:center;margin:.4rem 0}
+.bidpanel .btns{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin:.5rem 0}
+.bidpanel .btns button{min-width:3rem;font:700 1.15rem var(--serif);padding:.5rem .7rem}
+.results{width:100%;border-collapse:collapse;margin:.4rem 0 .9rem}
+.results th,.results td{padding:.4rem .5rem;border-bottom:1px solid var(--line);text-align:right}
+.results th:first-child,.results td:first-child{text-align:left}
+.results th{font-weight:500;color:var(--muted);font-size:.88rem}
+.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+.winner-row td:first-child{color:var(--brass);font-weight:700}
+.log{margin-top:1rem;color:var(--muted);font-size:.86rem}
+.log div{padding:.1rem 0}
+
+/* ---------- modal & toast ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(5,10,15,.72);display:flex;align-items:flex-start;justify-content:center;padding:4vh 1rem;z-index:20;overflow:auto}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.3rem;max-width:760px;width:100%}
+.modal .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
+.modal .head h2{margin:0}
+.modal .scroll{overflow-x:auto}
+.hist td.hit{color:var(--good)}
+.hist td small{color:var(--muted)}
+.rules p,.rules li{max-width:62ch}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);background:#3a1f19;border:1px solid #8a4a2c;padding:.6rem 1rem;border-radius:10px;z-index:30;max-width:92vw}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="live" class="sr" aria-live="polite"></div>
+
+<section id="auth" hidden>
+  <div class="fan" aria-hidden="true">
+    <span class="card black"><b>A</b><i>♠</i><u>♠</u></span>
+    <span class="card red"><b>K</b><i>♦</i><u>♦</u></span>
+    <span class="card red"><b>7</b><i>♥</i><u>♥</u></span>
+  </div>
+  <form class="auth-box" id="authForm" autocomplete="on">
+    <h1>Judgement</h1>
+    <p class="lead">Bid your tricks, then win exactly that many. One table, always open.</p>
+    <div class="field"><label for="name">Your name</label><input id="name" type="text" maxlength="16" autocomplete="username" required></div>
+    <div class="field"><label for="pass">Passcode</label><input id="pass" type="password" minlength="4" maxlength="64" autocomplete="current-password" required></div>
+    <div class="field" id="inviteField" hidden><label for="invite">Invite code (new accounts only)</label><input id="invite" type="text" autocomplete="off"></div>
+    <div class="row">
+      <button class="btn primary" type="submit" id="signin">Sign in</button>
+      <button class="btn" type="button" id="signup">Create account</button>
+    </div>
+    <p class="err" id="authErr" role="alert"></p>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="top">
+    <h1>Judgement</h1>
+    <span class="who" id="who"></span>
+    <button class="btn quiet" data-act="scores">Scores</button>
+    <button class="btn quiet" data-act="rules">Rules</button>
+    <button class="btn quiet" data-act="logout">Sign out</button>
+  </header>
+  <main>
+    <div class="banner" id="conn" hidden>Reconnecting to the table…</div>
+    <div id="stage"></div>
+  </main>
+</div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+(function(){
+'use strict';
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SYM = {S:'♠',H:'♥',C:'♣',D:'♦'};
+const SUIT = {S:'Spades',H:'Hearts',C:'Clubs',D:'Diamonds',N:'No trump'};
+const RK = {11:'J',12:'Q',13:'K',14:'A'};
+
+let token = localStorage.getItem('jd_token') || '';
+let S = null, es = null, offset = 0, modal = null, lastStage = '', pendingRender = false, lastLive = '';
+
+// ---------------------------------------------------------------- api
+async function api(path, body, method){
+  const opt = { method: method || (body ? 'POST' : 'GET'), headers: {} };
+  if (token) opt.headers.Authorization = 'Bearer ' + token;
+  if (body){ opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  const res = await fetch(path, opt);
+  let data = {};
+  try { data = await res.json(); } catch(e){}
+  return { ok: res.ok, status: res.status, data };
+}
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast'; el.setAttribute('role','alert'); el.textContent = msg;
+  $('#toastRoot').appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+async function act(type, extra){
+  const r = await api('/api/action', Object.assign({ type }, extra || {}));
+  if (!r.ok){
+    if (r.status === 401) return signOutLocal();
+    toast(r.data.error || 'That did not work.');
+  }
+}
+
+// ---------------------------------------------------------------- auth
+async function showAuth(){
+  $('#app').hidden = true; $('#auth').hidden = false;
+  $('#name').value = localStorage.getItem('jd_name') || '';
+  try { const c = await fetch('/api/config').then(r => r.json()); $('#inviteField').hidden = !c.inviteRequired; } catch(e){}
+}
+async function submitAuth(kind){
+  const err = $('#authErr'); err.textContent = '';
+  const name = $('#name').value.trim(), pass = $('#pass').value;
+  if (!name || !pass){ err.textContent = 'Enter your name and passcode.'; return; }
+  const body = { name, pass };
+  if (kind === 'register') body.invite = $('#invite').value;
+  const r = await api('/api/' + kind, body);
+  if (!r.ok){ err.textContent = r.data.error || 'Something went wrong.'; return; }
+  token = r.data.token;
+  localStorage.setItem('jd_token', token);
+  localStorage.setItem('jd_name', r.data.name);
+  $('#pass').value = '';
+  startApp();
+}
+function signOutLocal(){
+  if (es){ es.close(); es = null; }
+  token = ''; S = null; localStorage.removeItem('jd_token');
+  showAuth();
+}
+async function logout(){
+  await api('/api/logout', {});
+  signOutLocal();
+}
+
+// ---------------------------------------------------------------- live connection
+function startApp(){
+  $('#auth').hidden = true; $('#app').hidden = false;
+  connect();
+}
+function connect(){
+  if (es) es.close();
+  es = new EventSource('/api/stream?token=' + encodeURIComponent(token));
+  es.onopen = () => { $('#conn').hidden = true; };
+  es.onmessage = e => {
+    S = JSON.parse(e.data);
+    offset = S.now - Date.now();
+    $('#conn').hidden = true;
+    render();
+  };
+  es.onerror = async () => {
+    $('#conn').hidden = false;
+    const r = await api('/api/me').catch(() => ({ status: 0 }));
+    if (r.status === 401) signOutLocal();
+  };
+}
+
+// ---------------------------------------------------------------- views
+function cardHtml(id, cls, tag, attrs){
+  const s = id[0], r = Number(id.slice(1));
+  const red = s === 'H' || s === 'D';
+  const label = (RK[r] || r) + ' of ' + SUIT[s];
+  tag = tag || 'span';
+  return `<${tag} class="card ${red ? 'red' : 'black'} ${cls || ''}" ${attrs || ''} aria-label="${label}"><b>${RK[r] || r}</b><i>${SYM[s]}</i><u>${SYM[s]}</u></${tag}>`;
+}
+function trumpHtml(t){
+  if (t === 'N') return `<span class="trump"><span class="sym">∅</span><span>No trump</span></span>`;
+  return `<span class="trump"><span class="sym ${t==='H'||t==='D'?'red':''}">${SYM[t]}</span><span>${SUIT[t]} trump</span></span>`;
+}
+function plural(n, w){ return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+function lobbyHtml(g){
+  const seated = g.me >= 0;
+  const seats = [];
+  for (let i = 0; i < 6; i++){
+    const s = g.seats[i];
+    seats.push(s
+      ? `<li class="taken"><span class="dot ${s.online ? '' : 'off'}"></span><span class="nm">${esc(s.name)}</span>${i===0?'<span class="tag">host</span>':''}${i===g.me?'<span class="tag">you</span>':''}</li>`
+      : `<li class="muted">Open seat</li>`);
+  }
+  const st = g.settings;
+  let settings;
+  if (g.host){
+    const opts = [3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${st.maxCards===n?'selected':''}>${n}</option>`).join('');
+    settings = `<div class="settings">
+      <div><label for="s-max">Most cards dealt</label><select id="s-max" data-setting="maxCards">${opts}</select></div>
+      <div><label for="s-mode">Round sizes</label><select id="s-mode" data-setting="mode"><option value="updown" ${st.mode==='updown'?'selected':''}>Down, then back up</option><option value="down" ${st.mode==='down'?'selected':''}>Down only</option></select></div>
+      <div><label for="s-sc">Missed bid</label><select id="s-sc" data-setting="scoring"><option value="classic" ${st.scoring==='classic'?'selected':''}>Score 0</option><option value="penalty" ${st.scoring==='penalty'?'selected':''}>Lose a point per miss</option></select></div>
+    </div>`;
+  } else {
+    settings = `<p class="muted small">Up to ${g.effectiveMax} cards each, ${st.mode==='updown'?'down then back up':'down only'}. Missed bid: ${st.scoring==='classic'?'score 0':'lose a point per trick missed'}.</p>`;
+  }
+  let buttons = '';
+  if (!seated) buttons += `<button class="btn primary" data-act="join" ${g.seats.length>=6?'disabled':''}>Take a seat</button>`;
+  else {
+    if (g.host) buttons += `<button class="btn primary" data-act="start" ${g.seats.length<3?'disabled':''}>Start game</button>`;
+    buttons += `<button class="btn" data-act="leave">Leave seat</button>`;
+  }
+  let hint = '';
+  if (seated && g.seats.length < 3) hint = `Waiting for ${3 - g.seats.length} more player${g.seats.length===2?'':'s'} (3 to 6 can play).`;
+  else if (seated && !g.host) hint = `Waiting for ${esc(g.seats[0].name)} to start.`;
+  else if (!seated) hint = 'Sit down to join the next game. You can also just watch.';
+  const lb = S.leaderboard.length
+    ? `<ul class="board">${S.leaderboard.map(p => `<li><span>${esc(p.name)}</span><span class="muted">${plural(p.wins,'win')} · ${plural(p.games,'game')}</span></li>`).join('')}</ul>`
+    : `<p class="muted small">No finished games yet. Wins will be listed here.</p>`;
+  return `<div class="lobby">
+    <section class="panel"><h2>Game ${g.id}</h2>
+      <ul class="seatlist">${seats.join('')}</ul>
+      ${settings}
+      <div class="actions">${buttons}<span class="muted small">${hint}</span></div>
+    </section>
+    <div style="display:grid;gap:1rem">
+      <section class="panel"><h3>Most wins</h3>${lb}</section>
+      <section class="panel"><h3>Here now</h3><div class="chips">${S.online.map(n => `<span class="chip">${esc(n)}</span>`).join('')}</div></section>
+    </div>
+  </div>`;
+}
+
+function turnLine(g){
+  const me = g.me;
+  if (g.phase === 'bidding') return g.turn === me ? 'Your bid' : `${esc(g.seats[g.turn].name)} is bidding`;
+  if (g.phase === 'playing') return g.turn === me ? 'Your turn: play a card' : `${esc(g.seats[g.turn].name)} to play`;
+  if (g.phase === 'trickEnd') return `${esc(g.seats[g.trickWinner].name)} takes the trick`;
+  if (g.phase === 'roundEnd') return 'Round scored';
+  return 'Game over';
+}
+function plainTurn(g){
+  return turnLine(g).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+function bidPanel(g){
+  const cards = g.round.cards;
+  const btns = [];
+  let banned = null;
+  for (let n = 0; n <= cards; n++){
+    const okBid = g.validBids.includes(n);
+    if (!okBid) banned = n;
+    btns.push(`<button class="btn" data-act="bid" data-n="${n}" ${okBid?'':'disabled'} aria-label="Bid ${n}">${n}</button>`);
+  }
+  const claimed = g.seats.reduce((a, s) => a + (s.bid == null ? 0 : s.bid), 0);
+  return `<div class="bidpanel panel"><h3>How many tricks will you win?</h3>
+    <div class="muted small">${claimed} of ${plural(cards,'trick')} claimed so far.</div>
+    <div class="btns">${btns.join('')}</div>
+    ${banned!==null?`<div class="muted small">As dealer you can't bid ${banned}, because the bids can't add up to exactly ${cards}.</div>`:''}
+  </div>`;
+}
+
+function resultsTable(g, h, extra){
+  const rows = g.seats.map((s, i) => {
+    const r = h.rows[i];
+    return `<tr><td>${esc(s.name)}</td><td>${r.bid} / ${r.won}</td><td class="${r.delta>0?'pos':r.delta<0?'neg':'muted'}">${r.delta>0?'+':''}${r.delta}</td><td><b>${r.total}</b></td></tr>`;
+  }).join('');
+  return `<table class="results"><thead><tr><th>Player</th><th>Bid / won</th><th>Round</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function gameHtml(g){
+  const r = g.round, me = g.me;
+  const myTurn = g.turn === me && me >= 0;
+  const seats = g.seats.map((s, i) => `
+    <div class="seat ${i===g.turn?'turn':''} ${i===me?'me':''}">
+      <div class="top"><span class="nm">${esc(s.name)}</span><span class="score">${s.score}</span></div>
+      <div class="meta"><span>bid <b>${s.bid==null?'–':s.bid}</b></span><span>won <b>${s.won}</b></span><span>${plural(s.cards,'card')}</span></div>
+      <div>${i===g.dealer?'<span class="badge">dealer</span>':''}${s.away?'<span class="badge warn">away</span>':(!s.online?'<span class="badge warn">offline</span>':'')}</div>
+    </div>`).join('');
+
+  let feltInner;
+  if (g.phase === 'trickEnd' || g.trick.length){
+    feltInner = `<div class="trick">${g.trick.map(p => `<div class="play ${g.trickWinner===p.seat&&g.phase==='trickEnd'?'win':''}">${cardHtml(p.card)}<span class="who">${esc(g.seats[p.seat].name)}</span></div>`).join('')}</div>`;
+  } else if (g.phase === 'bidding'){
+    const claimed = g.seats.reduce((a, s) => a + (s.bid == null ? 0 : s.bid), 0);
+    feltInner = `<div class="hint">Bidding. ${claimed} of ${plural(r.cards,'trick')} claimed so far.</div>`;
+  } else if (g.phase === 'playing'){
+    feltInner = `<div class="hint">${esc(g.seats[g.turn].name)} leads the trick.</div>`;
+  } else feltInner = `<div class="hint"> </div>`;
+  if (g.phase === 'playing' && !g.trick.length && g.lastTrick){
+    feltInner += `<div class="last"><span>Last trick, ${esc(g.seats[g.lastTrick.winner].name)} won:</span>${g.lastTrick.plays.map(p => cardHtml(p.card)).join('')}</div>`;
+  }
+
+  let panel = '';
+  if (g.phase === 'roundEnd' && g.history.length){
+    const h = g.history[g.history.length - 1];
+    const iAmReady = me >= 0 && g.seats[me].ready;
+    const waiting = g.seats.filter(s => !s.ready && !s.away && s.online).map(s => esc(s.name));
+    panel = `<section class="panel"><h2>Round ${h.n} results</h2>${resultsTable(g, h)}
+      <div class="actions">${me>=0?`<button class="btn primary" data-act="ready" ${iAmReady?'disabled':''}>${iAmReady?'Ready':'Ready for next round'}</button>`:''}
+      <span class="muted small">${waiting.length?'Waiting for '+waiting.join(', ')+'. ':''}Continues in <span class="timer" data-until="${g.until}"></span></span></div></section>`;
+  }
+  if (g.phase === 'finished'){
+    const order = g.seats.map((s, i) => ({ s, i })).sort((a, b) => b.s.score - a.s.score);
+    const rows = order.map(({ s }, k) => `<tr class="${g.winners.includes(s.name)?'winner-row':''}"><td>${esc(s.name)}${g.winners.includes(s.name)?' (winner)':''}</td><td><b>${s.score}</b></td></tr>`).join('');
+    panel = `<section class="panel"><h2>${g.winners.length>1?'Tied at the top: ':''}${esc(g.winners.join(' and '))} ${g.winners.length>1?'win':'wins'}</h2>
+      <table class="results"><thead><tr><th>Player</th><th>Final score</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="actions">${me>=0?'<button class="btn primary" data-act="again">Play again</button><button class="btn" data-act="leave">Leave table</button>':''}
+      <span class="muted small">A new game opens in <span class="timer" data-until="${g.until}"></span></span></div></section>`;
+  }
+
+  let mine = '';
+  if (me < 0){
+    mine = `<p class="muted" style="text-align:center">You're watching this game. You can sit down when it ends.</p>`;
+  } else {
+    if (g.seats[me].away){
+      mine += `<div class="banner">You're marked away, so a bot is playing your cards. <button class="btn" data-act="back" style="margin-left:.5rem">I'm back</button></div>`;
+    }
+    if (g.phase === 'bidding' && myTurn) mine += bidPanel(g);
+    const playing = g.phase === 'playing' && myTurn;
+    mine += `<div class="hand" aria-label="Your hand">${g.hand.map(c => {
+      const cls = playing ? (g.legal.includes(c) ? 'legal' : 'dim') : '';
+      return cardHtml(c, cls, 'button', `data-act="play" data-card="${c}" ${playing && !g.legal.includes(c) ? 'aria-disabled="true"' : ''}`);
+    }).join('')}</div>`;
+  }
+
+  const log = g.log.slice(-4).map(l => `<div>${esc(l.text)}</div>`).join('');
+  const timer = (g.phase === 'bidding' || g.phase === 'playing') ? `<span class="timer" data-dl="${g.turnDeadline}"></span>` : '';
+  return `
+    <div class="status">
+      <span class="round">Round ${r.n} of ${r.total}, ${plural(r.cards,'card')}</span>
+      ${trumpHtml(r.trump)}
+      <span class="turn">${turnLine(g)}${timer}</span>
+    </div>
+    <div class="seats">${seats}</div>
+    <div class="felt">${feltInner}</div>
+    ${panel}
+    ${mine}
+    <div class="log">${log}</div>`;
+}
+
+function scoresModal(g){
+  if (!g.history.length) return `<p class="muted">No rounds have been scored yet.</p>`;
+  const head = g.seats.map(s => `<th>${esc(s.name)}</th>`).join('');
+  const rows = g.history.map(h => `<tr><td>${h.n}<br><small>${h.cards} ${h.trump==='N'?'∅':SYM[h.trump]}</small></td>${h.rows.map(r => `<td class="${r.bid===r.won?'hit':''}">${r.bid}/${r.won}<br><small>${r.delta>0?'+':''}${r.delta} → ${r.total}</small></td>`).join('')}</tr>`).join('');
+  return `<div class="scroll"><table class="results hist"><thead><tr><th>Round</th>${head}</tr></thead><tbody>${rows}</tbody></table></div><p class="muted small">Each cell shows bid / tricks won, then points scored and the running total.</p>`;
+}
+function rulesModal(){
+  return `<div class="rules">
+    <p>Everyone is dealt the same number of cards each round. Before play, each player says how many tricks they expect to win. You score only if you win <b>exactly</b> that many.</p>
+    <ul>
+      <li><b>Bidding:</b> starts left of the dealer. The dealer bids last and may not make the bids add up to the number of cards dealt, so someone is always wrong.</li>
+      <li><b>Playing:</b> follow the suit led if you can. The highest trump wins the trick; with no trump played, the highest card of the led suit wins. The trick winner leads next.</li>
+      <li><b>Trump</b> changes each round: spades, diamonds, clubs, hearts, then no trump.</li>
+      <li><b>Scoring:</b> an exact bid scores 10 plus your bid. A miss scores 0 (or loses a point per trick missed, if the host chose that).</li>
+      <li><b>Rounds:</b> the hand size counts down to 1 and usually back up again. Highest total wins.</li>
+      <li><b>Slow or gone?</b> If you run out of time, a bot plays for you until you press "I'm back".</li>
+    </ul></div>`;
+}
+function renderModal(){
+  const root = $('#modalRoot');
+  if (!modal){ root.innerHTML = ''; return; }
+  const title = modal === 'scores' ? 'Scores' : 'How to play';
+  const body = modal === 'scores' ? (S ? scoresModal(S.game) : '') : rulesModal();
+  const html = `<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-label="${title}">
+    <div class="head"><h2>${title}</h2><button class="btn quiet" data-act="closeModal" id="mclose">Close</button></div>${body}</div></div>`;
+  if (root.dataset.html !== html){ root.innerHTML = html; root.dataset.html = html; }
+}
+function openModal(m){
+  modal = m; renderModal();
+  const c = $('#mclose'); if (c) c.focus();
+}
+
+function render(){
+  if (!S) return;
+  if (document.activeElement && document.activeElement.tagName === 'SELECT'){ pendingRender = true; return; }
+  pendingRender = false;
+  const g = S.game;
+  $('#who').textContent = S.you;
+  const html = g.phase === 'lobby' ? lobbyHtml(g) : gameHtml(g);
+  if (html !== lastStage){ $('#stage').innerHTML = html; lastStage = html; }
+  renderModal();
+  tickTimers();
+  // document title + screen-reader announcement
+  const myTurn = g.me >= 0 && g.turn === g.me;
+  document.title = myTurn ? '▶ Your turn · Judgement' : 'Judgement';
+  const live = g.phase === 'lobby' ? '' : plainTurn(g);
+  if (live !== lastLive){ lastLive = live; $('#live').textContent = live; }
+}
+
+function tickTimers(){
+  const now = Date.now() + offset;
+  document.querySelectorAll('.timer').forEach(el => {
+    const t = Number(el.dataset.dl || el.dataset.until || 0);
+    if (!t){ el.textContent = ''; return; }
+    const s = Math.max(0, Math.ceil((t - now) / 1000));
+    el.textContent = el.dataset.dl ? (s <= 30 ? s + 's' : '') : s + 's';
+  });
+}
+setInterval(tickTimers, 250);
+
+// ---------------------------------------------------------------- events
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const a = el.dataset.act;
+  if (a === 'closeModal'){
+    // clicking the dimmed backdrop closes; clicks inside the dialog do not
+    if (el.classList.contains('modal-bg') && e.target !== el) return;
+    modal = null; $('#modalRoot').dataset.html = ''; renderModal(); return;
+  }
+  if (el.disabled) return;
+  if (a === 'scores' || a === 'rules') return openModal(a);
+  if (a === 'logout') return logout();
+  if (a === 'bid') return act('bid', { n: Number(el.dataset.n) });
+  if (a === 'play'){
+    if (el.getAttribute('aria-disabled') === 'true'){ toast('You must follow the suit that was led.'); return; }
+    return act('play', { card: el.dataset.card });
+  }
+  act(a);
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset && e.target.dataset.setting;
+  if (!k) return;
+  act('settings', { settings: { [k]: e.target.value } });
+  e.target.blur();
+});
+document.addEventListener('focusout', e => {
+  if (e.target.tagName === 'SELECT' && pendingRender) setTimeout(render, 0);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modal){ modal = null; $('#modalRoot').dataset.html = ''; renderModal(); }
+});
+$('#authForm').addEventListener('submit', e => { e.preventDefault(); submitAuth('login'); });
+$('#signup').addEventListener('click', () => submitAuth('register'));
+
+// ---------------------------------------------------------------- boot
+(async function boot(){
+  if (token){
+    const r = await api('/api/me').catch(() => ({ status: 0 }));
+    if (r.ok){ startApp(); return; }
+    if (r.status === 401){ token = ''; localStorage.removeItem('jd_token'); }
+    else { startApp(); return; } // server unreachable: keep the token and retry via the stream
+  }
+  showAuth();
+})();
+})();
+</script>
+</body>
+</html>
